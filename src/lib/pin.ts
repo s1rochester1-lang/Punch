@@ -11,7 +11,7 @@
 // crew on their own or a shared work device, not intended to resist a
 // determined attacker with API access. See README for details.
 const PIN_PAD = "punch-pad";
-const LOGIN_DOMAIN = "staffpin.local";
+const LOGIN_DOMAIN = "staffpin.app";
 
 export function pinToPassword(pin: string): string {
   return `${pin}${PIN_PAD}`;
