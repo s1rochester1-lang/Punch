@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    @apply bg-ink text-paper font-body antialiased;
+  }
+  h1,
+  h2,
+  h3,
+  .display {
+    @apply font-display uppercase tracking-wide;
+  }
+}
+
+@layer components {
+  /* Signature element: a punch-ticket stub used for every shift row.
+     Two notches are cut into the left/right edges like a torn ticket,
+     with a dashed perforation separating IN / OUT stamps. */
+  .ticket {
+    position: relative;
+    background: theme("colors.panel");
+    border-radius: theme("borderRadius.card");
+    background-image:
+      radial-gradient(circle at 0 50%, theme("colors.ink") 7px, transparent 7.5px),
+      radial-gradient(circle at 100% 50%, theme("colors.ink") 7px, transparent 7.5px);
+    background-repeat: no-repeat;
+  }
+
+  .ticket-divider {
+    border-left: 1px dashed theme("colors.paperDim" / 30%);
+  }
+
+  .stamp {
+    @apply font-mono tabular-nums;
+    letter-spacing: 0.02em;
+  }
+
+  .btn-primary {
+    @apply font-display uppercase tracking-wide text-ink bg-brass rounded-card
+      active:scale-[0.98] transition-transform duration-100 shadow-[0_2px_0_0_theme(colors.brass/70%)];
+  }
+
+  .btn-ghost {
+    @apply font-display uppercase tracking-wide text-paper bg-panelRaised rounded-card
+      active:scale-[0.98] transition-transform duration-100;
+  }
+
+  .input {
+    @apply w-full bg-panelRaised text-paper placeholder-muted rounded-card px-4 py-3
+      border border-transparent focus:border-brass focus:outline-none;
+  }
+}
