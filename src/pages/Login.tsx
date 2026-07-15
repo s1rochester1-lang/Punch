@@ -95,10 +95,12 @@ export default function Login() {
     <div className="min-h-dvh flex flex-col justify-center px-6 py-12">
       <div className="mx-auto w-full max-w-sm">
         <div className="mb-10 text-center">
-          <div className="mx-auto mb-4 h-14 w-14 rounded-full bg-brass flex items-center justify-center">
-            <span className="font-mono text-ink font-semibold text-lg">IN</span>
+          <div className="flex items-center justify-center gap-2">
+            <h1 className="text-3xl text-paper">Punch</h1>
+            <div className="h-9 w-9 rounded-full bg-brass flex items-center justify-center">
+              <span className="font-mono text-ink font-semibold text-xs">IN</span>
+            </div>
           </div>
-          <h1 className="text-3xl text-paper">Punch</h1>
           <p className="text-muted font-body normal-case tracking-normal mt-1">Staff time clock</p>
         </div>
 
