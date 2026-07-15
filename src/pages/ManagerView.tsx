@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { supabase } from "../lib/supabaseClient";
+import { api } from "../lib/api";
 import { Profile, TimeEntry } from "../lib/types";
 import { formatHours, formatMoney, weeklyHours } from "../lib/time";
 import Header from "../components/Header";
@@ -7,10 +7,8 @@ import StatTile from "../components/StatTile";
 import ShiftHistory from "../components/ShiftHistory";
 import ManualEntryModal from "../components/ManualEntryModal";
 import ResetPinModal from "../components/ResetPinModal";
-import { useAuth } from "../context/AuthContext";
 
 export default function ManagerView() {
-  const { profile: managerProfile } = useAuth();
   const [employees, setEmployees] = useState<Profile[]>([]);
   const [entriesByEmployee, setEntriesByEmployee] = useState<Record<string, TimeEntry[]>>({});
   const [loading, setLoading] = useState(true);
@@ -20,19 +18,10 @@ export default function ManagerView() {
   const [resettingPin, setResettingPin] = useState(false);
 
   const load = useCallback(async () => {
-    const { data: profiles } = await supabase
-      .from("profiles")
-      .select("*")
-      .order("full_name", { ascending: true });
-    const { data: entries } = await supabase
-      .from("time_entries")
-      .select("*")
-      .order("clock_in", { ascending: false })
-      .limit(2000);
-
-    setEmployees((profiles as Profile[]) ?? []);
+    const { employees, entries } = await api.get<{ employees: Profile[]; entries: TimeEntry[] }>("/team");
+    setEmployees(employees);
     const grouped: Record<string, TimeEntry[]> = {};
-    for (const e of (entries as TimeEntry[]) ?? []) {
+    for (const e of entries) {
       grouped[e.employee_id] = grouped[e.employee_id] ?? [];
       grouped[e.employee_id].push(e);
     }
@@ -45,29 +34,27 @@ export default function ManagerView() {
   }, [load]);
 
   async function saveEntry(values: { id?: string; clock_in: string; clock_out: string | null; notes: string | null }) {
-    if (!selected || !managerProfile) return;
+    if (!selected) return;
     if (values.id) {
-      const { error } = await supabase
-        .from("time_entries")
-        .update({ clock_in: values.clock_in, clock_out: values.clock_out, notes: values.notes })
-        .eq("id", values.id);
-      if (error) throw error;
-    } else {
-      const { error } = await supabase.from("time_entries").insert({
-        employee_id: selected.id,
-        clock_in: values.clock_in,
-        clock_out: values.clock_out,
+      await api.patch("/entries", {
+        id: values.id,
+        clockIn: values.clock_in,
+        clockOut: values.clock_out,
         notes: values.notes,
-        source: "manager",
-        created_by: managerProfile.id,
       });
-      if (error) throw error;
+    } else {
+      await api.post("/entries", {
+        employeeId: selected.id,
+        clockIn: values.clock_in,
+        clockOut: values.clock_out,
+        notes: values.notes,
+      });
     }
     await load();
   }
 
   async function deleteEntry(id: string) {
-    await supabase.from("time_entries").delete().eq("id", id);
+    await api.del("/entries", { id });
     await load();
   }
 
@@ -75,14 +62,13 @@ export default function ManagerView() {
     if (!selected) return;
     const rate = parseFloat(rateDraft);
     if (Number.isNaN(rate) || rate < 0) return;
-    await supabase.from("profiles").update({ hourly_rate: rate }).eq("id", selected.id);
+    await api.post("/rate", { employeeId: selected.id, hourlyRate: rate });
     await load();
     setSelected((s) => (s ? { ...s, hourly_rate: rate } : s));
   }
 
   if (loading) return <div className="p-6 text-muted">Loading…</div>;
 
-  // --- Employee detail screen ---
   if (selected) {
     const entries = entriesByEmployee[selected.id] ?? [];
     const weekHours = weeklyHours(entries);
@@ -174,7 +160,6 @@ export default function ManagerView() {
     );
   }
 
-  // --- Team roster screen ---
   return (
     <div className="pb-16">
       <Header title="Team" />
@@ -206,7 +191,7 @@ export default function ManagerView() {
 
         {employees.length === 0 && (
           <p className="text-muted text-sm font-body normal-case tracking-normal py-6 text-center">
-            No staff accounts yet. Have them sign up, then set their rate here.
+            No staff accounts yet.
           </p>
         )}
       </div>

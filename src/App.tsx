@@ -5,23 +5,14 @@ import EmployeeView from "./pages/EmployeeView";
 import ManagerView from "./pages/ManagerView";
 
 function Shell() {
-  const { session, profile, loading } = useAuth();
+  const { profile, loading } = useAuth();
   const [tab, setTab] = useState<"clock" | "team">("clock");
 
   if (loading) {
     return <div className="min-h-dvh flex items-center justify-center text-muted">Loading…</div>;
   }
 
-  if (!session) return <Login />;
-
-  if (!profile) {
-    return (
-      <div className="min-h-dvh flex items-center justify-center text-muted text-center px-6">
-        Setting up your account… if this doesn't resolve in a moment, ask your manager to check
-        your profile in Supabase.
-      </div>
-    );
-  }
+  if (!profile) return <Login />;
 
   if (profile.role !== "manager") {
     return <EmployeeView />;

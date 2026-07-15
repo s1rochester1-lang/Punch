@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { supabase } from "../lib/supabaseClient";
+import { api } from "../lib/api";
 import PinPad from "./PinPad";
 
 interface Props {
@@ -15,7 +15,7 @@ export default function ResetPinModal({ employeeId, employeeName, onClose }: Pro
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  async function handleFirst(value: string) {
+  function handleFirst(value: string) {
     setFirstPin(value);
     if (value.length === 4) {
       setStep("confirm");
@@ -36,15 +36,7 @@ export default function ResetPinModal({ employeeId, employeeName, onClose }: Pro
     setBusy(true);
     setError(null);
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
-      const res = await fetch("/api/reset-pin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ employeeId, newPin: value }),
-      });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body.error ?? "Couldn't reset the PIN.");
+      await api.post("/reset-pin", { employeeId, newPin: value });
       setStep("done");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't reset the PIN.");
@@ -87,10 +79,7 @@ export default function ResetPinModal({ employeeId, employeeName, onClose }: Pro
 
         {error && <p className="text-alert text-sm mt-4">{error}</p>}
 
-        <button
-          onClick={onClose}
-          className="btn-ghost w-full py-3 text-sm mt-6"
-        >
+        <button onClick={onClose} className="btn-ghost w-full py-3 text-sm mt-6">
           {step === "done" ? "Close" : "Cancel"}
         </button>
       </div>

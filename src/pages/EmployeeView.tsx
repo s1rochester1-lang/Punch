@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "../context/AuthContext";
+import { api } from "../lib/api";
 import { TimeEntry } from "../lib/types";
 import { formatHours, formatMoney, weeklyHours } from "../lib/time";
 import ClockCard from "../components/ClockCard";
@@ -15,16 +15,13 @@ export default function EmployeeView() {
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
-    if (!profile) return;
-    const { data, error } = await supabase
-      .from("time_entries")
-      .select("*")
-      .eq("employee_id", profile.id)
-      .order("clock_in", { ascending: false })
-      .limit(100);
-    if (!error && data) setEntries(data as TimeEntry[]);
-    setLoading(false);
-  }, [profile]);
+    try {
+      const { entries } = await api.get<{ entries: TimeEntry[] }>("/entries");
+      setEntries(entries);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     load();
@@ -35,26 +32,23 @@ export default function EmployeeView() {
   const weekPay = weekHours * (profile?.hourly_rate ?? 0);
 
   async function clockIn() {
-    if (!profile) return;
     setBusy(true);
-    const { error } = await supabase.from("time_entries").insert({
-      employee_id: profile.id,
-      clock_in: new Date().toISOString(),
-      source: "self",
-    });
-    if (!error) await load();
-    setBusy(false);
+    try {
+      await api.post("/clock", { action: "in" });
+      await load();
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function clockOut() {
-    if (!openEntry) return;
     setBusy(true);
-    const { error } = await supabase
-      .from("time_entries")
-      .update({ clock_out: new Date().toISOString() })
-      .eq("id", openEntry.id);
-    if (!error) await load();
-    setBusy(false);
+    try {
+      await api.post("/clock", { action: "out" });
+      await load();
+    } finally {
+      setBusy(false);
+    }
   }
 
   if (loading) return <div className="p-6 text-muted">Loading…</div>;

@@ -5,7 +5,6 @@ export interface Profile {
   full_name: string;
   role: Role;
   hourly_rate: number;
-  created_at: string;
 }
 
 export interface TimeEntry {

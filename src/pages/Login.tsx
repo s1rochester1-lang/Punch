@@ -1,17 +1,17 @@
 import { useEffect, useState } from "react";
-import { supabase } from "../lib/supabaseClient";
-import { emailForSlug, pinToPassword, slugify } from "../lib/pin";
+import { useAuth } from "../context/AuthContext";
+import { api } from "../lib/api";
 import PinPad from "../components/PinPad";
 
 interface DirectoryEntry {
   id: string;
   full_name: string;
-  login_slug: string;
 }
 
 type Mode = "select" | "pin" | "new-name" | "new-pin" | "new-confirm";
 
 export default function Login() {
+  const { login, signup } = useAuth();
   const [mode, setMode] = useState<Mode>("select");
   const [directory, setDirectory] = useState<DirectoryEntry[]>([]);
   const [loadingDirectory, setLoadingDirectory] = useState(true);
@@ -27,12 +27,14 @@ export default function Login() {
   }, []);
 
   async function loadDirectory() {
-    const { data } = await supabase
-      .from("staff_directory")
-      .select("id, full_name, login_slug")
-      .order("full_name", { ascending: true });
-    setDirectory((data as DirectoryEntry[]) ?? []);
-    setLoadingDirectory(false);
+    try {
+      const { employees } = await api.get<{ employees: DirectoryEntry[] }>("/directory");
+      setDirectory(employees);
+    } catch {
+      setDirectory([]);
+    } finally {
+      setLoadingDirectory(false);
+    }
   }
 
   function resetToSelect() {
@@ -49,22 +51,22 @@ export default function Login() {
     if (value.length !== 4 || !selected) return;
     setBusy(true);
     setError(null);
-    const { error } = await supabase.auth.signInWithPassword({
-      email: emailForSlug(selected.login_slug),
-      password: pinToPassword(value),
-    });
-    setBusy(false);
-    if (error) {
-      setError("That PIN didn't match. Try again.");
+    try {
+      await login(selected.id, value);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "That PIN didn't match. Try again.");
       setPin("");
+    } finally {
+      setBusy(false);
     }
   }
 
-  async function handleNewPinFirst(value: string) {
+  function handleNewPinFirst(value: string) {
     setFirstPin(value);
-    if (value.length !== 4) return;
-    setMode("new-confirm");
-    setPin("");
+    if (value.length === 4) {
+      setMode("new-confirm");
+      setPin("");
+    }
   }
 
   async function handleNewPinConfirm(value: string) {
@@ -77,31 +79,10 @@ export default function Login() {
       setPin("");
       return;
     }
-    await createAccount(value);
-  }
-
-  async function createAccount(finalPin: string) {
     setBusy(true);
     setError(null);
     try {
-      const baseSlug = slugify(newName);
-      const taken = new Set(directory.map((d) => d.login_slug));
-      const slug = taken.has(baseSlug) ? `${baseSlug}-${Math.floor(10 + Math.random() * 90)}` : baseSlug;
-
-      const { data, error } = await supabase.auth.signUp({
-        email: emailForSlug(slug),
-        password: pinToPassword(finalPin),
-        options: { data: { full_name: newName, login_slug: slug } },
-      });
-      if (error) throw error;
-      if (data.user && !data.session) {
-        setError(
-          "Account created, but sign-in needs email confirmation turned off. Ask your manager to check the Supabase auth settings, then try again."
-        );
-        resetToSelect();
-      }
-      // If a session came back, AuthContext's listener picks it up and the
-      // app moves past the login screen automatically.
+      await signup(newName, value);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't create that account.");
       setMode("new-name");
