@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getSupabaseAdmin, getBearerToken, verifySession, hashPin } from "./_shared/auth";
-import { isValidPin } from "./_shared/pin";
+import { getSupabaseAdmin, getBearerToken, verifySession, hashPin } from "./_shared/auth.js";
+import { isValidPin } from "./_shared/pin.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
