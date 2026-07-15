@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getSupabaseAdmin, getBearerToken, verifySession } from "./_shared/auth";
+import { getSupabaseAdmin, getBearerToken, verifySession } from "./_shared/auth.js";
 
 async function isManager(admin: ReturnType<typeof getSupabaseAdmin>, employeeId: string) {
   const { data } = await admin.from("employees").select("role").eq("id", employeeId).single();
