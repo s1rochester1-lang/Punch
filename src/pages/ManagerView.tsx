@@ -7,8 +7,10 @@ import StatTile from "../components/StatTile";
 import ShiftHistory from "../components/ShiftHistory";
 import ManualEntryModal from "../components/ManualEntryModal";
 import ResetPinModal from "../components/ResetPinModal";
+import { useAuth } from "../context/AuthContext";
 
 export default function ManagerView() {
+  const { profile: me } = useAuth();
   const [employees, setEmployees] = useState<Profile[]>([]);
   const [entriesByEmployee, setEntriesByEmployee] = useState<Record<string, TimeEntry[]>>({});
   const [loading, setLoading] = useState(true);
@@ -16,6 +18,8 @@ export default function ManagerView() {
   const [modalEntry, setModalEntry] = useState<TimeEntry | null | "new">(null);
   const [rateDraft, setRateDraft] = useState<string>("");
   const [resettingPin, setResettingPin] = useState(false);
+  const [confirmingRemove, setConfirmingRemove] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const { employees, entries } = await api.get<{ employees: Profile[]; entries: TimeEntry[] }>("/team");
@@ -65,6 +69,33 @@ export default function ManagerView() {
     await api.post("/rate", { employeeId: selected.id, hourlyRate: rate });
     await load();
     setSelected((s) => (s ? { ...s, hourly_rate: rate } : s));
+  }
+
+  async function toggleRole() {
+    if (!selected) return;
+    setActionError(null);
+    const nextRole = selected.role === "manager" ? "employee" : "manager";
+    try {
+      await api.post("/promote", { employeeId: selected.id, role: nextRole });
+      await load();
+      setSelected((s) => (s ? { ...s, role: nextRole } : s));
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "Couldn't change their role.");
+    }
+  }
+
+  async function removeEmployee() {
+    if (!selected) return;
+    setActionError(null);
+    try {
+      await api.post("/remove-employee", { employeeId: selected.id });
+      setConfirmingRemove(false);
+      setSelected(null);
+      await load();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "Couldn't remove them.");
+      setConfirmingRemove(false);
+    }
   }
 
   if (loading) return <div className="p-6 text-muted">Loading…</div>;
@@ -121,13 +152,59 @@ export default function ManagerView() {
           </button>
         </div>
 
-        <div className="px-5 mt-3">
+        <div className="px-5 mt-3 space-y-2">
           <button
             onClick={() => setResettingPin(true)}
-            className="text-xs text-muted font-body normal-case tracking-normal underline"
+            className="text-xs text-muted font-body normal-case tracking-normal underline block"
           >
             Reset {selected.full_name.split(" ")[0]}'s PIN
           </button>
+
+          {selected.id === me?.id ? (
+            <p className="text-xs text-muted font-body normal-case tracking-normal">
+              You can't change your own manager access or remove your own account while signed in.
+            </p>
+          ) : (
+            <>
+              <button
+                onClick={toggleRole}
+                className="text-xs text-muted font-body normal-case tracking-normal underline block"
+              >
+                {selected.role === "manager" ? "Remove manager access" : "Make manager"}
+              </button>
+
+              {!confirmingRemove ? (
+                <button
+                  onClick={() => setConfirmingRemove(true)}
+                  className="text-xs text-alert font-body normal-case tracking-normal underline block"
+                >
+                  Remove {selected.full_name.split(" ")[0]} entirely
+                </button>
+              ) : (
+                <div className="bg-panel rounded-card p-3 mt-2">
+                  <p className="text-paper text-xs font-body normal-case tracking-normal mb-2">
+                    This deletes {selected.full_name} and their entire shift history. This can't be undone.
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setConfirmingRemove(false)}
+                      className="btn-ghost flex-1 py-2 text-xs"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={removeEmployee}
+                      className="flex-1 py-2 text-xs rounded-card bg-alert text-paper"
+                    >
+                      Yes, remove them
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {actionError && <p className="text-alert text-xs">{actionError}</p>}
         </div>
 
         <div className="px-4 mt-8">
@@ -174,6 +251,8 @@ export default function ManagerView() {
               onClick={() => {
                 setSelected(emp);
                 setRateDraft("");
+                setConfirmingRemove(false);
+                setActionError(null);
               }}
               className="ticket w-full flex items-center justify-between px-5 py-4 text-left"
             >
