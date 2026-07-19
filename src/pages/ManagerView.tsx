@@ -7,6 +7,7 @@ import StatTile from "../components/StatTile";
 import ShiftHistory from "../components/ShiftHistory";
 import ManualEntryModal from "../components/ManualEntryModal";
 import ResetPinModal from "../components/ResetPinModal";
+import PullToRefresh from "../components/PullToRefresh";
 import { useAuth } from "../context/AuthContext";
 
 export default function ManagerView() {
@@ -107,8 +108,9 @@ export default function ManagerView() {
     const isOpen = entries.some((e) => e.clock_out === null);
 
     return (
+      <PullToRefresh onRefresh={load}>
       <div className="pb-16">
-        <div className="px-4 pt-6">
+        <div className="px-4 pt-10">
           <button
             onClick={() => setSelected(null)}
             className="text-muted text-xs font-body normal-case tracking-normal underline"
@@ -234,10 +236,12 @@ export default function ManagerView() {
           />
         )}
       </div>
+      </PullToRefresh>
     );
   }
 
   return (
+    <PullToRefresh onRefresh={load}>
     <div className="pb-16">
       <Header title="Team" />
       <div className="px-4 mt-2 space-y-2">
@@ -275,5 +279,6 @@ export default function ManagerView() {
         )}
       </div>
     </div>
+    </PullToRefresh>
   );
 }
