@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface Props {
   value: string;
@@ -9,6 +9,8 @@ interface Props {
 const KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "back"];
 
 export default function PinPad({ value, onChange, length = 4 }: Props) {
+  const [pressed, setPressed] = useState<string | null>(null);
+
   function press(key: string) {
     if (key === "") return;
     if (key === "back") {
@@ -51,9 +53,15 @@ export default function PinPad({ value, onChange, length = 4 }: Props) {
               key={i}
               type="button"
               onClick={() => press(key)}
+              onTouchStart={() => setPressed(key)}
+              onTouchEnd={() => setPressed(null)}
+              onTouchCancel={() => setPressed(null)}
+              onMouseDown={() => setPressed(key)}
+              onMouseUp={() => setPressed(null)}
+              onMouseLeave={() => setPressed(null)}
               className={`h-16 rounded-card font-mono text-2xl flex items-center justify-center ${
-                key === "back" ? "text-muted text-base" : "bg-panelRaised text-paper"
-              }`}
+                key === "back" ? "text-muted text-base" : "text-paper"
+              } ${pressed === key ? "bg-brass/50" : "bg-panelRaised"}`}
             >
               {key === "back" ? "⌫" : key}
             </button>
