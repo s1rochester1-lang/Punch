@@ -8,7 +8,7 @@ interface DirectoryEntry {
   full_name: string;
 }
 
-type Mode = "select" | "pin" | "new-name" | "new-pin" | "new-confirm";
+type Mode = "select" | "pin" | "new-name" | "new-pin" | "new-confirm" | "manager-name";
 
 export default function Login() {
   const { login, signup } = useAuth();
@@ -21,6 +21,7 @@ export default function Login() {
   const [firstPin, setFirstPin] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [managerName, setManagerName] = useState("");
 
   useEffect(() => {
     loadDirectory();
@@ -44,6 +45,7 @@ export default function Login() {
     setNewName("");
     setFirstPin("");
     setError(null);
+    setManagerName("");
   }
 
   async function handleSignInPin(value: string) {
@@ -56,6 +58,24 @@ export default function Login() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "That PIN didn't match. Try again.");
       setPin("");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleManagerLookup() {
+    if (!managerName.trim()) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const found = await api.post<{ id: string; full_name: string }>("/manager-lookup", {
+        fullName: managerName.trim(),
+      });
+      setSelected({ id: found.id, full_name: found.full_name });
+      setMode("pin");
+      setPin("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No manager account found with that name.");
     } finally {
       setBusy(false);
     }
@@ -133,6 +153,35 @@ export default function Login() {
             <button onClick={() => setMode("new-name")} className="btn-ghost w-full py-3 text-sm mt-4">
               I'm new here
             </button>
+
+            <button
+              onClick={() => setMode("manager-name")}
+              className="w-full text-center text-xs text-muted font-body normal-case tracking-normal underline mt-2"
+            >
+              Manager sign-in
+            </button>
+          </div>
+        )}
+
+        {mode === "manager-name" && (
+          <div className="space-y-3">
+            <input
+              className="input"
+              placeholder="Your full name"
+              value={managerName}
+              onChange={(e) => setManagerName(e.target.value)}
+              autoFocus
+            />
+            {error && <p className="text-alert text-sm">{error}</p>}
+            <button onClick={handleManagerLookup} disabled={busy} className="btn-primary w-full py-3 text-sm disabled:opacity-50">
+              {busy ? "Looking…" : "Continue"}
+            </button>
+            <button
+              onClick={resetToSelect}
+              className="w-full text-center text-sm text-muted font-body normal-case tracking-normal underline"
+            >
+              Back
+            </button>
           </div>
         )}
 
@@ -200,7 +249,7 @@ export default function Login() {
           </div>
         )}
 
-        {mode !== "select" && mode !== "pin" && (
+        {mode !== "select" && mode !== "pin" && mode !== "manager-name" && (
           <p className="mt-8 text-xs text-muted font-body normal-case tracking-normal text-center">
             Your manager sets your hourly rate after your first sign-in.
           </p>
