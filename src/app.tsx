@@ -21,7 +21,10 @@ function Shell() {
   return (
     <div>
       {tab === "clock" ? <EmployeeView /> : <ManagerView />}
-      <nav className="fixed bottom-0 inset-x-0 bg-panel border-t border-panelRaised flex">
+      <nav
+        className="fixed bottom-0 inset-x-0 bg-panel border-t border-panelRaised flex"
+        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      >
         <button
           onClick={() => setTab("clock")}
           className={`flex-1 py-4 text-xs uppercase tracking-wide font-body ${
