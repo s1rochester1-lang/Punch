@@ -1,69 +1,29 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#1C1A17" />
+    <title>Punch — Staff Time Clock</title>
 
-@layer base {
-  html,
-  body,
-  #root {
-    height: 100%;
-  }
-  body {
-    @apply bg-ink text-paper font-body antialiased;
-    padding-top: env(safe-area-inset-top);
-  }
-  h1,
-  h2,
-  h3,
-  .display {
-    @apply font-display uppercase tracking-wide;
-  }
-  /* Universal tap feedback - every button presses down and dims slightly,
-     since native :active states are often invisible on touch devices. */
-  button:not(:disabled) {
-    transition: transform 100ms ease, opacity 100ms ease;
-  }
-  button:not(:disabled):active {
-    transform: scale(0.96);
-    opacity: 0.8;
-  }
-}
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" href="/icon-192.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Punch" />
+    <meta name="mobile-web-app-capable" content="yes" />
 
-@layer components {
-  /* Signature element: a punch-ticket stub used for every shift row.
-     Two notches are cut into the left/right edges like a torn ticket,
-     with a dashed perforation separating IN / OUT stamps. */
-  .ticket {
-    position: relative;
-    background: theme("colors.panel");
-    border-radius: theme("borderRadius.card");
-    background-image:
-      radial-gradient(circle at 0 50%, theme("colors.ink") 7px, transparent 7.5px),
-      radial-gradient(circle at 100% 50%, theme("colors.ink") 7px, transparent 7.5px);
-    background-repeat: no-repeat;
-  }
-
-  .ticket-divider {
-    border-left: 1px dashed theme("colors.paperDim" / 30%);
-  }
-
-  .stamp {
-    @apply font-mono tabular-nums;
-    letter-spacing: 0.02em;
-  }
-
-  .btn-primary {
-    @apply font-display uppercase tracking-wide text-ink bg-brass rounded-card
-      active:scale-[0.98] transition-transform duration-100 shadow-[0_2px_0_0_theme(colors.brass/70%)];
-  }
-
-  .btn-ghost {
-    @apply font-display uppercase tracking-wide text-paper bg-panelRaised rounded-card
-      active:scale-[0.98] transition-transform duration-100;
-  }
-
-  .input {
-    @apply w-full bg-panelRaised text-paper placeholder-muted rounded-card px-4 py-3
-      border border-transparent focus:border-brass focus:outline-none;
-  }
-}
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="bg-ink">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
