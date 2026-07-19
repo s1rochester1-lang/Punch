@@ -8,6 +8,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { data, error } = await admin
     .from("employees")
     .select("id, full_name")
+    .eq("role", "employee")
     .order("full_name", { ascending: true });
 
   if (error) return res.status(500).json({ error: error.message });
