@@ -19,13 +19,16 @@
     @apply font-display uppercase tracking-wide;
   }
   /* Universal tap feedback - every button presses down and dims slightly,
-     since native :active states are often invisible on touch devices. */
+     since native :active states are often invisible on touch devices.
+     Pressing in is near-instant (20ms) so even a very fast tap shows it;
+     releasing eases back out more smoothly. */
   button:not(:disabled) {
-    transition: transform 100ms ease, opacity 100ms ease;
+    transition: transform 150ms ease, opacity 150ms ease;
   }
   button:not(:disabled):active {
     transform: scale(0.96);
     opacity: 0.8;
+    transition: transform 20ms ease, opacity 20ms ease;
   }
 }
 
