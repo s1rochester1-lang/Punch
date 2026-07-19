@@ -10,12 +10,22 @@
   }
   body {
     @apply bg-ink text-paper font-body antialiased;
+    padding-top: env(safe-area-inset-top);
   }
   h1,
   h2,
   h3,
   .display {
     @apply font-display uppercase tracking-wide;
+  }
+  /* Universal tap feedback - every button presses down and dims slightly,
+     since native :active states are often invisible on touch devices. */
+  button:not(:disabled) {
+    transition: transform 100ms ease, opacity 100ms ease;
+  }
+  button:not(:disabled):active {
+    transform: scale(0.96);
+    opacity: 0.8;
   }
 }
 
