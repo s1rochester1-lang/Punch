@@ -1,4 +1,4 @@
-# Punch — staff time clock
+# Punch — Staff Time Clock
 
 Mobile-first time tracking for a restaurants. Staff taps their name and enter
 a 4-digit PIN to clock in and out; managers see everyone's hours, edit or
